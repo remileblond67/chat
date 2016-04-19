@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>SuperChat</title>
+    <style>
+        #chatZone strong {
+            color: white;
+            background-color: black;
+            padding: 2px;
+        }
+
+        #chatZone p.otherMessage {
+          text-align: left;
+          width: 50%;
+          margin-left: 50%;
+        }
+
+        #chatZone p.generalMessage {
+          text-align: center;
+        }
+
+        #chatZone p.myMessage {
+          text-align: left;
+          width: 50%;
+        }
+
+        .nbUser {
+          float: right;
+          background-color: yellow;
+        }
+    </style>
+  </head>
+  <body>
+    <audio id="newMessageSound" src="/sound/newMessage.wav" preload="auto"></audio>
+    <audio id="newUserSound" src="/sound/newUser.wav" preload="auto"></audio>
+    <audio id="bipSound" src="/sound/bip.wav" preload="auto"></audio>
+    <h1>Le super Chat en temps réel <span id="pseudo"></span></h1>
+    <div id="nbUser"></div>
+    <form action="/" method="post" id="chatForm">
+      <input type="text" name="message" id="message" placeholder="Votre message..." size="50" autofocus>
+      <input type="submit" id="sendMessage" value="Envoyer" />
+    </form>
+    <button type="button" name="button" id="bip">Bip</button>
+
+    <section id="chatZone">
+
+    </section>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="http://code.jquery.com/jquery-1.10.1.min.js"></script>
+    <script>
+        var socket = io.connect('http://192.168.0.14:8080');
+        var pseudo = prompt('Quel est votre pseudo ?');
+        document.title = pseudo + ' - ' + document.title;
+        $('#pseudo').text(' - ' + pseudo);
+        socket.emit('newUser', pseudo);
+
+        // Information de la connexion d'un autre utilisateur
+        socket.on('newUser', function(data)  {
+          $('#chatZone').prepend('<p class="generalMessage"><em>' + data.pseudo + ' a rejoint le Chat</em></p>');
+          document.getElementById('newUserSound').play();
+          updateNbUser(data.nbUser);
+        });
+
+        socket.on('disconnectUser', function(data) {
+          $('#chatZone').prepend('<p class="generalMessage">'+data.pseudo+' a quitté le Chat</p>');
+          data.nbUser--;
+          updateNbUser(data.nbUser);
+        });
+
+        socket.on('message', function(data) {
+          otherMessage(data.pseudo, data.message);
+          updateNbUser(data.nbUser);
+          document.getElementById('newMessageSound').play();
+        });
+
+        socket.on('bip', function() {
+          document.getElementById('bipSound').play();
+        });
+
+        // Envoi d'un message
+        $('#chatForm').submit(function() {
+          var message = $('#message').val();
+          socket.emit('message', message);
+          myMessage(pseudo, message);
+          $('#message').val('').focus();
+          return(false); // blocage de l'envoi "classique"
+        });
+
+        $('#bip').click(function() {
+          socket.emit('bip');
+        });
+
+        function myMessage(pseudo, message) {
+          $('#chatZone').prepend('<p class="myMessage"><strong>' + pseudo + '</strong> : '+message+'</p>');
+        };
+
+        function updateNbUser(nb) {
+          $('#nbUser').text(nb + ' utilisateurs connectés');
+        }
+
+        function otherMessage(pseudo, message) {
+          $('#chatZone').prepend('<p class="otherMessage"><strong>' + pseudo + '</strong> : '+message+'</p>');
+        };
+    </script>
+  </body>
+</html>
