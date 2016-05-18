@@ -7,7 +7,8 @@
         "cookie-session": "~1.1.0",
         "body-parser": "~1.10.1",
         "socket.io": "~1.4.5",
-        "ent": "~0.1.0"
+        "ent": "~0.1.0",
+        "bootstrap": "3.3.6"
     },
     "author": "Rémi LEBLOND <remi.leblond@laposte.net>",
     "description": "Un système de Chat en temps réel basé sur NodeJs"
